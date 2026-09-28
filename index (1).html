@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preventivas ES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --ink:#1D2B36; --ink2:#51606B; --ink3:#8A96A0; --line:#D5DCE1; --bg:#EEF1F3; --panel:#FFFFFF;
+  --ok:#2E9E5B; --parcial:#E0A100; --falta:#D64545; --na:#A7B0B7; --prog:#1F6FD1;
+  --r:6px; font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;color:var(--ink);background:var(--bg);font-size:14px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:var(--r);padding:6px 12px}
+button:hover{border-color:var(--ink3)}
+button.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.pri:hover{background:#2E4250}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--prog);outline-offset:1px}
+input,select,textarea{border:1px solid var(--line);border-radius:var(--r);padding:6px 8px;background:#fff}
+label{font-size:12px;color:var(--ink2);display:block;margin-bottom:3px}
+.hidden{display:none!important}
+
+/* login */
+#login{min-height:100%;display:grid;place-items:center;padding:24px}
+#login form{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;width:min(340px,100%)}
+#login h1{font-size:20px;font-weight:600;margin:0 0 4px}
+#login p{margin:0 0 20px;color:var(--ink2)}
+#login .f{margin-bottom:12px} #login input{width:100%}
+#login .erro{color:var(--falta);font-size:13px;min-height:18px;margin:4px 0 10px}
+
+/* app */
+#app{height:100%;display:grid;grid-template-rows:auto 1fr}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end}
+header .marca{font-weight:600;font-size:16px;margin-right:6px;align-self:center}
+header .filtro select,header .filtro input{min-width:120px}
+.nums{display:flex;gap:18px;margin-left:auto;align-self:center}
+.num b{display:block;font-size:18px;font-weight:600;line-height:1.1}
+.num span{font-size:12px;color:var(--ink2)}
+main{display:grid;grid-template-columns:1fr 400px;min-height:0}
+#mapa{min-height:0}
+aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;min-height:0}
+.vazio{padding:28px 22px;color:var(--ink2);line-height:1.6}
+.vazio b{color:var(--ink);font-weight:500}
+
+.legenda{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;font-size:12px;line-height:1.9}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:6px;border:1px solid #fff}
+.dot.anel{border:2.5px solid var(--prog);width:13px;height:13px;background:transparent}
+
+/* card */
+.cab{padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.cab .tag{font-size:12px;color:var(--ink2);letter-spacing:.02em}
+.cab h2{font-size:17px;font-weight:600;margin:2px 0 2px;line-height:1.3}
+.cab .ape{color:var(--ink2);margin:0 0 10px}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px}
+.meta dt{color:var(--ink2)} .meta dd{margin:0}
+.resumo{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px}
+.pill{border-radius:99px;padding:2px 10px;font-size:12px;font-weight:500;white-space:nowrap}
+.p-ok{background:#E3F4EA;color:#1D6B3D}.p-parcial{background:#FBF0D2;color:#7A5800}.p-falta{background:#FBE4E4;color:#912C2C}.p-na{background:#ECEFF1;color:#55616A}.p-prog{background:#E2EDFB;color:#16539E}
+
+.sec{padding:14px 20px;border-bottom:1px solid var(--line)}
+.sec h3{font-size:13px;font-weight:600;margin:0 0 10px}
+.comp{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:9px 0;border-top:1px solid #EEF1F3}
+.comp:first-of-type{border-top:0}
+.comp .nome{font-weight:500}
+.comp .det{grid-column:1/-1;font-size:12px;color:var(--ink2)}
+.ordens{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:3px}
+.ord{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:1px 6px;background:#F7F9FA;cursor:pointer}
+.ord:hover{border-color:var(--ink3)}
+.lnk{border:0;background:none;padding:0;font-size:12px;color:var(--prog)}
+.lnk:hover{text-decoration:underline}
+
+.form{display:grid;gap:10px}
+.form .linha{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form input,.form select,.form textarea{width:100%}
+.checks{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}
+.checks label{display:flex;gap:6px;align-items:center;color:var(--ink);font-size:13px;margin:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.seg button{flex:1;border:0;border-radius:0;padding:6px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on[data-v="OK"]{background:#E3F4EA;color:#1D6B3D;font-weight:500}
+.seg button.on[data-v="Não OK"]{background:#FBE4E4;color:#912C2C;font-weight:500}
+.acoes{display:flex;gap:8px;justify-content:flex-end}
+.msg{font-size:12px;color:var(--falta)}
+
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:grid;grid-template-columns:48px 1fr;gap:8px;padding:6px 0;font-size:13px;border-top:1px solid #EEF1F3}
+.tl li:first-child{border-top:0}
+.tl .d{color:var(--ink2)}
+.tl .ok{color:#1D6B3D}.tl .no{color:#912C2C}
+.tl .o{grid-column:2;color:var(--ink2);font-size:12px}
+
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:var(--r);font-size:13px;z-index:2000;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+#carregando{position:absolute;inset:0;display:grid;place-items:center;background:rgba(238,241,243,.8);z-index:1000;color:var(--ink2)}
+
+@media (max-width:860px){
+  main{grid-template-columns:1fr;grid-template-rows:55vh auto}
+  aside{border-left:0;border-top:1px solid var(--line)}
+  .nums{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+
+<section id="login">
+  <form id="fLogin">
+    <h1>Preventivas ES</h1>
+    <p>Entre com seu usuário e senha.</p>
+    <div class="f"><label for="email">Usuário</label><input id="email" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="pcm" required></div>
+    <div class="f"><label for="senha">Senha</label><input id="senha" type="password" autocomplete="current-password" required></div>
+    <div class="erro" id="loginErro"></div>
+    <button class="pri" type="submit" style="width:100%">Entrar</button>
+  </form>
+</section>
+
+<section id="app" class="hidden">
+  <header>
+    <div class="marca">Preventivas ES</div>
+    <div class="filtro"><label for="fMun">Município</label>
+      <select id="fMun"><option value="">Todos</option><option>Serra</option><option>Vila Velha</option><option>Cariacica</option></select></div>
+    <div class="filtro"><label for="fComp">Componente</label>
+      <select id="fComp"><option value="">Todos</option><option>Painel</option><option>Barrilete</option><option>Bomba</option><option>Prev ETE</option></select></div>
+    <div class="filtro"><label for="fVer">Mostrar</label>
+      <select id="fVer">
+        <option value="pend">Com algo faltando</option>
+        <option value="semprog">Faltando e sem programação</option>
+        <option value="prog">Programadas</option>
+        <option value="todas">Todas as plantas</option>
+      </select></div>
+    <div class="filtro"><label for="fTent">Tentativas a partir de</label><input id="fTent" type="number" min="0" value="0" style="width:90px;min-width:0"></div>
+    <div class="filtro"><label for="fBusca">Buscar</label><input id="fBusca" type="search" placeholder="TAG ou nome"></div>
+    <div class="nums">
+      <div class="num"><b id="nOk">–</b><span>executados</span></div>
+      <div class="num"><b id="nProg">–</b><span>programados</span></div>
+      <div class="num"><b id="nSem">–</b><span>sem programação</span></div>
+      <div><button id="sair" title="Sair">Sair</button></div>
+    </div>
+  </header>
+  <main>
+    <div id="mapa" style="position:relative"><div id="carregando">Carregando plantas…</div></div>
+    <aside id="painel"><div class="vazio"><b>Clique numa bolinha</b> para ver o que falta na planta, as tentativas e para programar ou registrar o resultado.<br><br>Use os filtros no topo para mudar o que o mapa mostra. Com um componente selecionado, as cores passam a mostrar só ele.</div></aside>
+  </main>
+</section>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://cnzbeolcofgzrszmvdbr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_M58jPZlwaAtLTG8otsNbvg_IPz0WfA-';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const DOMINIO_LOGIN = '@preventivas.es';   // o app completa o usuário com isso: pcm -> pcm@preventivas.es
+
+const MOTIVOS = ['Munck','Equipe','Acesso','Peça/Material','Programação','Outro'];
+const COR = {ok:'#2E9E5B', parcial:'#E0A100', falta:'#D64545', na:'#A7B0B7'};
+const hoje = () => new Date().toLocaleDateString('sv-SE');
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dm = d => d ? d.slice(8,10)+'/'+d.slice(5,7) : '';
+
+let plantas = {}, compsPorTag = {}, tentPorComp = {}, marcadores = {}, mapa, selecionada = null;
+
+function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('on'),2600); }
+
+/* ---------- login ---------- */
+$('fLogin').onsubmit = async e => {
+  e.preventDefault(); $('loginErro').textContent='';
+  const u = $('email').value.trim().toLowerCase();
+  const email = u.includes('@') ? u : u + DOMINIO_LOGIN;
+  const {error} = await sb.auth.signInWithPassword({email, password:$('senha').value});
+  if (error) { $('loginErro').textContent = 'Usuário ou senha não conferem. Confira e tente de novo.'; return; }
+  iniciar();
+};
+$('sair').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+/* ---------- dados ---------- */
+async function buscarTudo(tabela, sel='*'){
+  let out=[], de=0, passo=1000;
+  while(true){
+    const {data,error} = await sb.from(tabela).select(sel).range(de, de+passo-1);
+    if (error) throw error;
+    out = out.concat(data); if (data.length < passo) break; de += passo;
+  }
+  return out;
+}
+async function carregar(){
+  const [pl, cp, tt] = await Promise.all([buscarTudo('plantas'), buscarTudo('componentes'), buscarTudo('tentativas')]);
+  plantas={}; compsPorTag={}; tentPorComp={};
+  pl.forEach(p => plantas[p.tag]=p);
+  cp.forEach(c => (compsPorTag[c.tag] ||= []).push(c));
+  tt.forEach(t => (tentPorComp[t.componente_id] ||= []).push(t));
+}
+async function recarregarPlanta(tag){
+  const {data:cp,error:e1} = await sb.from('componentes').select('*').eq('tag',tag);
+  if (e1) throw e1;
+  compsPorTag[tag]=cp;
+  const ids = cp.map(c=>c.id);
+  const {data:tt,error:e2} = ids.length ? await sb.from('tentativas').select('*').in('componente_id',ids) : {data:[]};
+  if (e2) throw e2;
+  ids.forEach(id => delete tentPorComp[id]);
+  tt.forEach(t => (tentPorComp[t.componente_id] ||= []).push(t));
+}
+
+/* ---------- regras de status ---------- */
+const ORDEM = {Painel:1, Barrilete:2, Bomba:3, 'Prev ETE':4};
+function compsValidos(tag, filtroComp){
+  return (compsPorTag[tag]||[]).filter(c => c.status!=='Não se aplica' && (!filtroComp || c.componente===filtroComp))
+         .sort((a,b)=>ORDEM[a.componente]-ORDEM[b.componente]);
+}
+const programado = c => c.status!=='Concluído' && c.data_programada && c.data_programada >= hoje();
+function situacao(tag, filtroComp){
+  const cs = compsValidos(tag, filtroComp);
+  if (!cs.length) return {cor:'na', prog:false, n:0, ok:0};
+  const ok = cs.filter(c=>c.status==='Concluído').length;
+  return {cor: ok===cs.length ? 'ok' : ok>0 ? 'parcial' : 'falta', prog: cs.some(programado), n:cs.length, ok};
+}
+const tentativasDaPlanta = tag => (compsPorTag[tag]||[]).flatMap(c => (tentPorComp[c.id]||[]).map(t => ({...t, componente:c.componente})));
+
+/* ---------- mapa ---------- */
+function montarMapa(){
+  mapa = L.map('mapa',{zoomControl:true}).setView([-20.28,-40.33], 11);
+  const ruas = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {attribution:'&copy; OpenStreetMap', maxZoom:19});
+  const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    {attribution:'Imagens &copy; Esri', maxZoom:19});
+  ruas.addTo(mapa);
+  L.control.layers({'Ruas':ruas, 'Satélite':satelite}, null, {position:'topright'}).addTo(mapa);
+  const leg = L.control({position:'bottomleft'});
+  leg.onAdd = () => { const d=L.DomUtil.create('div','legenda'); d.innerHTML=
+    `<div><span class="dot" style="background:${COR.ok}"></span>Tudo executado</div>
+     <div><span class="dot" style="background:${COR.parcial}"></span>Parcial</div>
+     <div><span class="dot" style="background:${COR.falta}"></span>Nada executado</div>
+     <div><span class="dot" style="background:${COR.na}"></span>Sem preventiva no ciclo</div>
+     <div><span class="dot anel"></span>Tem data programada</div>`; return d; };
+  leg.addTo(mapa);
+}
+function estiloMarcador(s, sel){
+  return { radius: sel?10:7, fillColor: COR[s.cor], fillOpacity: .95,
+           color: s.prog ? '#1F6FD1' : (sel ? '#1D2B36' : '#fff'), weight: s.prog ? 3 : (sel ? 2.5 : 1.2) };
+}
+function passaFiltro(p, s){
+  const mun=$('fMun').value, ver=$('fVer').value, minT=+$('fTent').value||0, busca=$('fBusca').value.trim().toLowerCase();
+  if (mun && p.municipio!==mun) return false;
+  if (busca && !(`${p.tag} ${p.nome} ${p.apelido||''}`.toLowerCase().includes(busca))) return false;
+  if (minT && tentativasDaPlanta(p.tag).length < minT) return false;
+  if (ver==='todas') return true;
+  const falta = s.n>0 && s.ok<s.n;
+  if (ver==='pend') return falta;
+  if (ver==='semprog') return falta && !s.prog;
+  if (ver==='prog') return s.prog;
+  return true;
+}
+function desenhar(){
+  const fc = $('fComp').value;
+  let tot=0, ok=0, prog=0, sem=0;
+  Object.values(plantas).forEach(p => {
+    if (p.lat==null) return;
+    const s = situacao(p.tag, fc), vis = passaFiltro(p, s);
+    let m = marcadores[p.tag];
+    if (!m){ m = L.circleMarker([p.lat,p.lng]).on('click',()=>abrir(p.tag)).bindTooltip(()=>`${esc(p.apelido||p.nome)} (${esc(p.tag)})`); marcadores[p.tag]=m; }
+    m.setStyle(estiloMarcador(s, p.tag===selecionada));
+    if (vis){ if(!mapa.hasLayer(m)) m.addTo(mapa); } else if (mapa.hasLayer(m)) m.remove();
+    if (!$('fMun').value || p.municipio===$('fMun').value){
+      compsValidos(p.tag, fc).forEach(c => { tot++; if(c.status==='Concluído') ok++; else if(programado(c)) prog++; else sem++; });
+    }
+  });
+  $('nOk').textContent = tot ? `${ok}/${tot}` : '0';
+  $('nProg').textContent = prog; $('nSem').textContent = sem;
+}
+['fMun','fComp','fVer','fTent','fBusca'].forEach(id => $(id).addEventListener('input', () => { desenhar(); if(selecionada) abrir(selecionada,false); }));
+
+/* ---------- card da planta ---------- */
+function abrir(tag, centralizar=false){
+  const antiga = selecionada; selecionada = tag;
+  const p = plantas[tag], fc=$('fComp').value, s = situacao(tag, ''), cs = compsValidos(tag,'');
+  [antiga, tag].forEach(t => { if (t && marcadores[t]) marcadores[t].setStyle(estiloMarcador(situacao(t,fc), t===selecionada)); });
+  if (centralizar && p.lat!=null) mapa.setView([p.lat,p.lng], 15);
+
+  const tents = tentativasDaPlanta(tag).sort((a,b)=> (b.data||'').localeCompare(a.data||'') || b.id-a.id);
+  const insuc = tents.filter(t=>t.resultado==='Não OK');
+  const cont = {}; insuc.forEach(t => cont[t.motivo]=(cont[t.motivo]||0)+1);
+  const top = Object.entries(cont).sort((a,b)=>b[1]-a[1])[0];
+  const abertos = cs.filter(c=>c.status!=='Concluído');
+  const pillCls = {ok:'p-ok',parcial:'p-parcial',falta:'p-falta',na:'p-na'}[s.cor];
+  const pillTxt = s.n ? `${s.ok}/${s.n} executados` : 'Sem preventiva no ciclo';
+
+  $('painel').innerHTML = `
+  <div class="cab">
+    <div class="tag">${esc(p.tag)}</div>
+    <h2>${esc(p.nome)}</h2>
+    ${p.apelido ? `<p class="ape">${esc(p.apelido)}</p>` : ''}
+    <dl class="meta">
+      <dt>Município</dt><dd>${esc(p.municipio)}</dd>
+      ${p.encarregado?`<dt>Encarregado</dt><dd>${esc(p.encarregado)}</dd>`:''}
+      ${p.icamento?`<dt>Içamento</dt><dd>${esc(p.icamento)}</dd>`:''}
+      ${p.acesso?`<dt>Acesso</dt><dd>${esc(p.acesso)}</dd>`:''}
+      ${p.situacao_operacional?`<dt>Situação</dt><dd>${esc(p.situacao_operacional)}</dd>`:''}
+    </dl>
+    <div class="resumo"><span class="pill ${pillCls}">${pillTxt}</span>
+      <span>${tents.length} tentativa${tents.length===1?'':'s'}</span>
+      ${top?`<span style="color:var(--ink2)">Top motivo: ${esc(top[0])} (${top[1]})</span>`:''}</div>
+  </div>
+
+  <div class="sec"><h3>Componentes</h3>
+    ${cs.length ? cs.map(c => {
+      const nt=(tentPorComp[c.id]||[]).length;
+      const st = c.status==='Concluído' ? '<span class="pill p-ok">Executado</span>'
+               : programado(c) ? `<span class="pill p-prog">${dm(c.data_programada)} · ${esc(c.equipe||'')}</span>`
+               : '<span class="pill p-falta">Falta</span>';
+      return `<div class="comp"><span class="nome">${esc(c.componente)}</span>${st}
+        <span class="det">${c.trimestre_an04?c.trimestre_an04+'° trimestre AN04':''}${nt?` · ${nt} tentativa${nt>1?'s':''}`:''}${c.obs?` · ${esc(c.obs)}`:''}</span>
+        <div class="ordens">${(c.ordens_sap||[]).map(o=>`<span class="ord" title="Copiar" data-copia="${esc(o)}">${esc(o)}</span>`).join('')}
+          <button class="lnk" data-ordem="${c.id}">${(c.ordens_sap||[]).length?'Editar ordens':'Adicionar ordem SAP'}</button></div>
+      </div>`; }).join('') : '<div style="color:var(--ink2)">Nenhum componente no ciclo atual.</div>'}
+  </div>
+
+  ${abertos.length ? `
+  <div class="sec"><h3>Programar</h3>
+    <div class="form" id="fProg">
+      <div class="checks">${abertos.map(c=>`<label><input type="checkbox" value="${c.id}" checked>${esc(c.componente)}</label>`).join('')}</div>
+      <div class="linha">
+        <div><label for="pData">Data</label><input id="pData" type="date" value="${abertos.find(programado)?.data_programada || ''}"></div>
+        <div><label for="pEq">Equipe</label><select id="pEq">${['Serra','VVA/CRC'].map(e=>`<option ${e===(p.municipio==='Serra'?'Serra':'VVA/CRC')?'selected':''}>${e}</option>`).join('')}</select></div>
+      </div>
+      <div class="msg" id="pMsg"></div>
+      <div class="acoes">${abertos.some(programado)?'<button id="pTirar">Tirar da programação</button>':''}<button class="pri" id="pSalvar">Programar</button></div>
+    </div>
+  </div>
+
+  <div class="sec"><h3>Registrar resultado</h3>
+    <div class="form">
+      <div class="linha">
+        <div><label for="rComp">Componente</label><select id="rComp">${abertos.map(c=>`<option value="${c.id}">${esc(c.componente)}</option>`).join('')}</select></div>
+        <div><label for="rData">Data</label><input id="rData" type="date" value="${hoje()}"></div>
+      </div>
+      <div class="seg" id="rRes"><button data-v="OK" class="on">Executado</button><button data-v="Não OK">Não executado</button></div>
+      <div class="linha" id="rMotBox" style="display:none">
+        <div><label for="rMot">Motivo</label><select id="rMot"><option value="">Escolha</option>${MOTIVOS.map(m=>`<option>${m}</option>`).join('')}</select></div>
+        <div><label for="rEq">Equipe</label><select id="rEq"><option>Serra</option><option>VVA/CRC</option></select></div>
+      </div>
+      <div><label for="rObs">Observação</label><textarea id="rObs" rows="2" placeholder="Ex.: munck grande não entra na rua"></textarea></div>
+      <div class="msg" id="rMsg"></div>
+      <div class="acoes"><button class="pri" id="rSalvar">Registrar</button></div>
+    </div>
+  </div>` : ''}
+
+  <div class="sec"><h3>Linha do tempo</h3>
+    ${tents.length ? `<ul class="tl">${tents.map(t=>`<li><span class="d">${dm(t.data)}</span>
+      <span class="${t.resultado==='OK'?'ok':'no'}">${esc(t.componente)}: ${t.resultado==='OK'?'executado':'não executado · '+esc(t.motivo)}</span>
+      ${t.obs?`<span class="o">${esc(t.obs)}</span>`:''}</li>`).join('')}</ul>`
+      : '<div style="color:var(--ink2)">Nenhuma tentativa registrada ainda.</div>'}
+  </div>`;
+
+  ligarCard(tag);
+}
+
+function ligarCard(tag){
+  const painel = $('painel'), p = plantas[tag];
+  painel.querySelectorAll('[data-copia]').forEach(el => el.onclick = () => { navigator.clipboard?.writeText(el.dataset.copia); toast(`Ordem ${el.dataset.copia} copiada`); });
+  painel.querySelectorAll('[data-ordem]').forEach(el => el.onclick = () => editarOrdens(tag, +el.dataset.ordem));
+
+  const pSalvar = $('pSalvar');
+  if (pSalvar){
+    const rEq=$('rEq'); if (rEq) rEq.value = p.municipio==='Serra'?'Serra':'VVA/CRC';
+    pSalvar.onclick = async () => {
+      const ids=[...painel.querySelectorAll('#fProg input[type=checkbox]:checked')].map(i=>+i.value), d=$('pData').value;
+      if (!ids.length) return $('pMsg').textContent='Marque pelo menos um componente.';
+      if (!d) return $('pMsg').textContent='Escolha a data.';
+      await salvar(sb.from('componentes').update({status:'Programado', data_programada:d, equipe:$('pEq').value, atualizado_em:new Date().toISOString()}).in('id',ids), tag, `Programado para ${dm(d)}`);
+    };
+    const tirar=$('pTirar');
+    if (tirar) tirar.onclick = async () => {
+      const ids=[...painel.querySelectorAll('#fProg input[type=checkbox]:checked')].map(i=>+i.value);
+      await salvar(sb.from('componentes').update({status:'Pendente', data_programada:null, atualizado_em:new Date().toISOString()}).in('id',ids), tag, 'Tirado da programação');
+    };
+    let res='OK';
+    painel.querySelectorAll('#rRes button').forEach(b => b.onclick = () => {
+      res=b.dataset.v; painel.querySelectorAll('#rRes button').forEach(x=>x.classList.toggle('on',x===b));
+      $('rMotBox').style.display = res==='OK' ? 'none' : 'grid';
+    });
+    const sincData = () => { const c=(compsPorTag[tag]||[]).find(c=>c.id===+$('rComp').value); if (c?.data_programada) $('rData').value=c.data_programada; if(c?.equipe) $('rEq').value=c.equipe; };
+    $('rComp').onchange = sincData; sincData();
+    $('rSalvar').onclick = async () => {
+      const mot=$('rMot').value;
+      if (res==='Não OK' && !mot) return $('rMsg').textContent='Escolha o motivo de não ter executado.';
+      if (!$('rData').value) return $('rMsg').textContent='Escolha a data.';
+      await salvar(sb.from('tentativas').insert({componente_id:+$('rComp').value, data:$('rData').value, equipe:$('rEq').value,
+        resultado:res, motivo: res==='OK'?null:mot, obs:$('rObs').value.trim()||null}), tag, res==='OK'?'Execução registrada':'Tentativa registrada');
+    };
+  }
+}
+
+async function editarOrdens(tag, id){
+  const c=(compsPorTag[tag]||[]).find(c=>c.id===id);
+  const txt = prompt(`Ordens SAP do ${c.componente} (separe por vírgula ou espaço). Deixe vazio para remover.`, (c.ordens_sap||[]).join(', '));
+  if (txt===null) return;
+  const ordens=[...new Set(txt.split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean))];
+  await salvar(sb.from('componentes').update({ordens_sap:ordens}).eq('id',id), tag, 'Ordens salvas');
+}
+
+async function salvar(query, tag, ok){
+  const {error} = await query;
+  if (error){ toast('Não salvou: '+error.message); return; }
+  try { await recarregarPlanta(tag); } catch(e){ toast('Salvou, mas não recarregou. Atualize a página.'); }
+  desenhar(); abrir(tag); toast(ok);
+}
+
+/* ---------- início ---------- */
+async function iniciar(){
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  if (!mapa) montarMapa();
+  try { await carregar(); $('carregando').remove(); desenhar(); }
+  catch(e){ $('carregando').textContent = 'Não foi possível carregar os dados: '+e.message; }
+}
+sb.auth.getSession().then(({data}) => { if (data.session) iniciar(); });
+</script>
+</body>
+</html>
